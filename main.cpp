@@ -19,19 +19,21 @@
  BusInOut qti(D3,D4,D7,D8);
  //DigitalInOut pin10(D10);//ping
  DigitalIn encoder(D11);
+ DigitalInOut pin10(D10);
  BBCar car(pin5, pin6, servo_ticker);
  EventQueue queue(32 * EVENTS_EVENT_SIZE);
  EventQueue queue2(32 * EVENTS_EVENT_SIZE);
  EventQueue queue3(32 * EVENTS_EVENT_SIZE);
  EventQueue queue_1(32 * EVENTS_EVENT_SIZE);
+ parallax_ping  ping1(pin10);
  Timer timer;
  Thread t,t2,t3,t_1;
  //parallax_ping  ping1(pin10);
  float  time_pass=0;
- double pingbef=0,pingminu=0,judge=1;
+ double pingbef=0,pingminu=0,judge=1,pdistant=0;
  double pingtemp[2];
  bool K=0,jud=1;
- int ok=1,distant=0,timess=1,timess2=1,speed=0,qtirec=0,state=0;
+ int ok=1,timess=1,timess2=1,speed=0,qtirec=0,state=0;
  volatile int steps;
  volatile int last;
 /**
@@ -60,7 +62,7 @@ void goStraight(uint8_t car, int32_t  speed){
 }
 void turn(uint8_t car, int32_t speed, double factor){
     if(1) {
-        printf(" %d , %f , \n",qtirec, time_pass,steps*6.5*3.14/32 );
+        printf("%d, %f ,%d  \n",qtirec,pdistant,state);
     }
 }
 /****** erpc  *******/
@@ -81,6 +83,7 @@ void go_1status(){
     } 
 }
 void Qtirecord(){
+    pdistant=ping1;
     qti.output();
     qti=0b1111;
     wait_us(250);
