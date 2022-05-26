@@ -1,83 +1,37 @@
-import curses
+# led_test_client.py
+# Test client for erpc led server example
+# Author: becksteing/Jing-Jia Liou
+# Date: 02/13/2022
+# Blinks LEDs on a connected Mbed-enabled board running the erpc LED server example
+
+from time import sleep
 import time
-import sys
 import erpc
-from bbcar_control import *
+from blink_led import *
+import sys
 
-def main():
-
-    """
-    The curses.wrapper function is an optional function that
-    encapsulates a number of lower-level setup and teardown
-    functions, and takes a single function to run when
-    the initializations have taken place.
-    """
+if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        print("Usage: python bbcar_control.py <serial port to use>")
+        print("Usage: python led_test_client.py <serial port to use>")
         exit()
 
     # Initialize all erpc infrastructure
-    global client
     xport = erpc.transport.SerialTransport(sys.argv[1], 9600)
     client_mgr = erpc.client.ClientManager(xport, erpc.basic_codec.BasicCodec)
-    client = client.BBCarServiceClient(client_mgr)
+    client = client.LEDBlinkServiceClient(client_mgr)
 
-    curses.wrapper(curses_main)
-
-
-def curses_main(w):
-
-    """
-    This function is called curses_main to emphasise that it is
-    the logical if not actual main function, called by curses.wrapper.
-    """
-
-    w.addstr("----------------------------------\n")
-    w.addstr("| Use arrow keys to control car. |\n")
-    w.addstr("| s to stop car and q to exit.   |\n")
-    w.addstr("---------------------------------\n")
-    w.refresh()
-
-    bbcar_control(w)
-
-
-def bbcar_control(w):
-    w.nodelay(True)
+    # Blink LEDs on the connected erpc server
+    turning_on = True
     while True:
-      char = w.getch()
-      w.move(5, 0)
-      w.clrtobot()
-      if char == ord('q'): break
-      client.turn(1, 100, -0.3)
-      time.sleep(0.1)
+        
+        for i in range(1, 3):
+            if(turning_on):
+                print("Call led_on ", i)
+                client.led_on(i)
+            else:
+                print("Call led_off ", i)
+                client.led_off(i)
+            sleep(0.5)
 
-main()
-
-
-
-'''char = w.getch()
-        w.move(5, 0)
-        w.clrtobot()
-        if char == ord('q'): break  # q
-        elif char == curses.KEY_RIGHT:
-           w.addstr("Turn right.")
-           w.refresh()
-           client.turn(1, 100, -0.3)
-         elif char == curses.KEY_LEFT:
-           w.addstr("Turn left.")
-           w.refresh()
-           client.turn(1, 100, 0.3)
-        elif char == curses.KEY_UP:
-           w.addstr("Go straight.")
-           w.refresh()
-           client.goStraight(1, 100)
-        elif char == curses.KEY_DOWN:
-           w.addstr("Go backward.")
-           w.refresh()
-           client.goStraight(1, -100)
-        elif char == ord('s'):
-           w.addstr("Stop.")
-           w.refresh()
-           client.stop(1)
-        else: pass'''
+        turning_on = not turning_on
