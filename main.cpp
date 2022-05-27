@@ -33,7 +33,7 @@
  double pingbef=0,pingminu=0,judge=1;
  double pingtemp[2];
  bool K=0,jud=1;
- int ok=1,timess=0,timess2=1,speed=0,qtirec=0,state=0;
+ int ok=1,timess=0,timess2=1,speed=0,qtirec=0,state=0,tempstate,obstacle=0,pingbeg=0;
  volatile int steps;
  volatile int last;
 /**
@@ -77,10 +77,26 @@ void encoder_control() {
    last = value;
 }
 void statusjudge(){
-        if(qtirec==0b1111&&timess==0){
+        //ThisThread::sleep_for(100ms);
+        if(qtirec==0b1111&&timess==0&&obstacle==0){
             state++;
             timess=1;
         }
+        if(pdistant>5){
+            pingbeg=1;
+        }//將一開始ping雜質刷掉
+        if(qtirec==0b1111&&timess==0&&obstacle==1){
+            timess=1;
+        }
+        if(pdistant<5&&pingbeg==1){
+            tempstate=state;
+            state=-1;
+            printf("ping\n");
+        }
+        if(qtirec==0b1111&&state==0&&obstacle==1){
+        state=tempstate--;
+        printf("ob\n");
+        } //timess證明1111以過去
 }
 void Qtirecord(){
     pdistant=ping1;
@@ -102,69 +118,58 @@ void suddenstop(){
 
 
 double facter=0.3;
-double speedt=40,speedt2=40,speedt3=50;
+double speedt=40,speedt2=50,speedt3=60;
 void Qtijudge(){
-    
     car.stop();
-    /*if(qtirec==0b0110){
-        car.goStraight(-10);
-        ThisThread::sleep_for(1ms);
-    }*/
-    //ThisThread::sleep_for(1ms);
-    if(qtirec==0b1000){
+    if(qtirec==0b1000&&state!=-1){
         car.turn(speedt3,facter); //left
         timess=0;
-        //state=0;
     } 
-    else if(qtirec==0b1100){
+    else if(qtirec==0b1100&&state!=-1){
         car.turn(speedt2,facter);
         timess=0;
-        //state=0;
     }
-    else if(qtirec==0b0100){
+    else if(qtirec==0b0100&&state!=-1){
         car.turn(speedt,facter);
         timess=0;
-        //state=0;
     } 
-    else if(qtirec==0b0110){
+    else if(qtirec==0b0110&&state!=-1){
         car.goStraight(18.5);
         timess=0;
-        //state=0;
     } 
-    else if(qtirec==0b0010){
+    else if(qtirec==0b0010&&state!=-1){
         car.turn(speedt,-facter);//right
         timess=0;
-        state=0;
     } 
-    else if(qtirec==0b0011){
+    else if(qtirec==0b0011&&state!=-1){
         car.turn(speedt2,-facter);
         timess=0;
-        //state=0;
     } 
-    else if(qtirec==0b0001){
+    else if(qtirec==0b0001&&state!=-1){
         car.turn(speedt3,-facter);
         timess=0;
-        //state=0;
     }
-    else if(qtirec==0b0000){
+    else if(qtirec==0b0000&&state!=-1){
         car.goStraight(-20);
         timess=0;
-        //state=0;
     } 
-    /*else if(qtirec==0b1111&&state==0){
-         car.goStraight(20);
-    }*/
-    else if(qtirec==0b1111&&state==2){
-        //qtirec=0b1000;
-        //ThisThread::sleep_for(10ms);
+    else if(qtirec==0b1111&&state==2&&obstacle==0){
         car.turn(speedt3,facter);
-        ThisThread::sleep_for(5ms);
-    } 
-    else if(qtirec==0b1001||qtirec==0b1101||qtirec==0b1011){
+        ThisThread::sleep_for(10ms);
+    } //1111其一狀況第一叉點
+
+    else if(qtirec==0b1111&&state==2&&obstacle==1){
+        car.turn(speedt3,-facter);
+        ThisThread::sleep_for(10ms);
+    } //1111其一狀況 回頭 
+    else if((qtirec==0b1001||qtirec==0b1101||qtirec==0b1011)&&state!=0){
         car.goStraight(10);
-        //state=0;
         timess=0;
-    } 
+    } //排除特例
+    else if(state==-1){
+        car.goStraight(-20);
+        obstacle=1;
+    }
 }
 
 /** erpc infrastructure */
