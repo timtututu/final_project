@@ -10,7 +10,7 @@
 #include <cmath>
 #include <exception>
 
-#include "blink_led_server.h"
+#include "bbcar_control_server.h"
 //
 #define CENTER_BASE 1500
  Ticker servo_ticker;
@@ -54,17 +54,31 @@ mbed::DigitalOut* leds[] = { &led1, &led2, &led3 };
  BBCar* cars[] = {&car}; //Control only one car
 
 /****** erpc  *******/
-void led_on(uint8_t led) {
-  if(0 < led && led <= 2) {
-          *leds[led - 1] = 0;
-        printf("test%d\n", led);
+
+void stop(uint8_t car){
+    if(car == 1) { //there is only one car
+          *leds[car - 1] = 0;
+        // Uncomment for actual BB Car operations
+        // (*cars[car -1]).stop();
+        printf("Car %d stop.\n", car);
   }
 }
 
-void led_off(uint8_t led) {
-  if(0 < led && led <= 2) {
-          *leds[led - 1] = 1;
-  printf("%d,%f,%d\n",qtirec,pdistant,state);
+void goStraight(uint8_t car, int32_t  speed){
+    if(car == 1) { //there is only one car
+          *leds[car - 1] = 0;
+        // Uncomment for actual BB Car operations
+        // (*cars[car -1]).goStraight(speed);
+        printf("Car %d go straight at speed %d.\n", car, speed);
+  }
+}
+
+void turn(uint8_t car, int32_t speed, double factor){
+    if(car == 1) { //there is only one car
+          *leds[car - 1] = 0;
+        // Uncomment for actual BB Car operations
+        // (*cars[car -1]).turn(speed, factor);
+        printf("Car %d turn at speed %d with a factor of %f.\n", car, speed, factor);
   }
 }
 /****** erpc  *******/
@@ -81,8 +95,8 @@ void statusjudge(){
         if(qtirec==0b1111&&timess==0&&obstacle==0){
             state++;
             timess=1;
-            printf("stst++");
-            ThisThread::sleep_for(1s);
+            //printf("stst++");
+            //ThisThread::sleep_for(1s);要得
         }
         if(pdistant>5){
             pingbeg=1;
@@ -93,22 +107,22 @@ void statusjudge(){
         if(pdistant<5&&pingbeg==1){
             tempstate=state;
             state=-1;
-            printf("ping\n");
+            //printf("ping\n");
         }
         if(qtirec==0b1111&&state==0&&obstacle==1){
         state=tempstate--;
-        printf("ob\n");
+        //printf("ob\n");
         } //timess證明1111以過去
 }
 void Qtirecord(){
-    pdistant=ping1;
+    //pdistant=ping1;不能加 接收不夠快
     qti.output();
     qti=0b1111;
     wait_us(250);
     qti.input();
     wait_us(250);
     qtirec=qti;
-   printf("%d ,%d,t=%d,%f,obs=%d\n",qtirec,state,timess,pdistant,obstacle);
+   //printf("%d ,%d,t=%d,%f,obs=%d\n",qtirec,state,timess,pdistant,obstacle);
 }
 void suddenstop(){
         speed=0;
@@ -123,111 +137,118 @@ double facter=0.3;
 double speedt=30,speedt2=40,speedt3=50;
 double straight=18.5;
 void Qtijudge(){
+    //state=-1;
     car.stop();
-    if(qtirec==0b1000&&state!=-1){
+    if(qtirec==0b1000){
         if(state!=-1){
             car.turn(speedt3,facter); //left
             timess=0;
         }
-        else{
+        /*else{
             car.turn(-speedt3,facter);
             timess=0;
-        }
+        }*/
     } 
     else if(qtirec==0b1100){
         if(state!=-1){
             car.turn(speedt2,facter); //left
             timess=0;
         }
-        else{
+        /*else{
             car.turn(-speedt2,facter);
             timess=0;
-        }
+        }*/
     }
     else if(qtirec==0b0100){
         if(state!=-1){
             car.turn(speedt,facter); //left
             timess=0;
         }
-        else{
+        /*else{
             car.turn(-speedt,facter);
             timess=0;
-        }
+        }*/
     } 
     else if(qtirec==0b0110){
         if(state!=-1){
             car.goStraight(straight); //left
             timess=0;
         }
-        else{
+        /*else{
             car.goStraight(-straight);
             timess=0;
-        }
+        }*/
     } 
     else if(qtirec==0b0010){
         if(state!=-1){
             car.turn(speedt,-facter); //left
             timess=0;
         }
-        else{
+        /*else{
             car.turn(-speedt,-facter);
             timess=0;
-        }
+        }*/
     } 
     else if(qtirec==0b0011){
         if(state!=-1){
             car.turn(speedt2,-facter); //left
             timess=0;
         }
-        else{
+        /*else{
             car.turn(-speedt2,-facter);
             timess=0;
-        }
+        }*/
     } 
     else if(qtirec==0b0001){
         if(state!=-1){
             car.turn(speedt3,-facter); //left
             timess=0;
         }
-        else{
+       /* else{
             car.turn(-speedt3,-facter);
             timess=0;
-        }
+        }*/
     }///以下未改
     else if(qtirec==0b0000&&state!=-1&&state!=2){
-        car.goStraight(-20);
+        car.goStraight(-straight);
         timess=0;
-    }
+    }//怕超過岔點所以state!=2
+    /*else if(qtirec==0b0000&&state==-1){
+        car.goStraight(straight);
+        timess=0;
+    }*/
     else if(qtirec==0b1111&&state!=-1&&state!=2){
         car.goStraight(straight);
         timess=0;
     } 
     else if(qtirec==0b1111&&state==2&&obstacle==0){
         car.turn(speedt3,facter);
-        ThisThread::sleep_for(1s);
+        //ThisThread::sleep_for(1s);要得
         state++;
     } //1111其一狀況第一叉點
 
     else if(qtirec==0b1111&&state==2&&obstacle==1){
         car.turn(speedt3,-facter);
-        ThisThread::sleep_for(10ms);
+        //ThisThread::sleep_for(10ms);要得
     } //1111其一狀況 回頭  //以上未改
     else if((qtirec==0b1001||qtirec==0b1101||qtirec==0b1011||qtirec==0b0101||qtirec==0b1010||qtirec==0b0111||qtirec==0b1110)){
         if(state!=-1){
             car.goStraight(straight);//left
-            printf("bug");
+            //printf("bug");
             timess=0;
         }
-        else{
+        /*else{
             car.goStraight(-straight);//left
-            printf("bug");
+            //printf("bug");
             timess=0;
-        }
+        }*/
     } //排除特例
-    /*else if(state==-1){
-        car.goStraight(-20);
+    else if(state==-1){
+        car.turn(30,1);
+        //ThisThread::sleep_for(1500ms);要得
+        state=tempstate;
         obstacle=1;
-    }*/
+    }
 }
 
 /** erpc infrastructure */
@@ -238,17 +259,55 @@ erpc::Crc16 crc16;
 erpc::SimpleServer rpc_server;
 
 /** LED service */
-LEDBlinkService_service led_service;
-void erpc_call(){
-  
+BBCarService_service car_control_service;
+/*void erpc_call(){
     rpc_server.run();
-}
+}*/
 void erpc_init(){
-        // Initialize the rpc server
+  printf("Initializing server.\n");
+  rpc_server.setTransport(&uart_transport);
+  rpc_server.setCodecFactory(&basic_cf);
+  rpc_server.setMessageBufferFactory(&dynamic_mbf);
+
+  // Add the led service to the server
+  printf("Adding BBCar server.\n");
+  rpc_server.addService(&car_control_service);
+
+  // Run the server. This should never exit
+  printf("Running server.\n");
+  rpc_server.run();
+}
+
+
+int main(void) {
+            // Initialize the rpc server
   uart_transport.setCrc16(&crc16);
 
-  // Set up hardware flow control, if needed
+ /* // Set up hardware flow control, if needed
 #if CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
+  uart_transport.set_flow_control(mbed::SerialBase::RTS, STDIO_UART_RTS, NC);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
+  uart_transport.set_flow_control(mbed::SerialBase::CTS, NC, STDIO_UART_CTS);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTSCTS
+  uart_transport.set_flow_control(mbed::SerialBase::RTSCTS, STDIO_UART_RTS, STDIO_UART_CTS);
+#endif*/
+ /* double pwm_table0[] = {150, 120, 90, 60, 30, 0, -30, -60, -90, -120, -150};
+   double speed_table0[] = {42.252,41.136,37.947,28.620,13.393,0.000,16.024,30.214,38.346,41.694,42.970};*/
+   double pwm_table0[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
+   double speed_table0[] = {41.376,40.020,37.150,28.381,12.755,0.000,16.741,30.693,40.180,41.056};
+   double pwm_table1[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
+   double speed_table1[] = {41.376,40.020,37.150,28.381,12.755,0.000,16.741,30.693,40.180,41.056};
+
+  // first and fourth argument : length of table
+  car.setCalibTable(11, pwm_table0, speed_table0, 11, pwm_table1, speed_table1);
+  t.start(callback(&queue, &EventQueue::dispatch_forever));
+  queue.call_every(1ms, Qtirecord);
+  t3.start(callback(&queue3, &EventQueue::dispatch_forever));
+  queue3.call_every(10ms, Qtijudge);
+  t2.start(callback(&queue2, &EventQueue::dispatch_forever));
+  queue2.call_every(5ms, statusjudge);
+ // t_2.start(erpc_init);
+  #if CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
   uart_transport.set_flow_control(mbed::SerialBase::RTS, STDIO_UART_RTS, NC);
 #elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
   uart_transport.set_flow_control(mbed::SerialBase::CTS, NC, STDIO_UART_CTS);
@@ -262,69 +321,11 @@ void erpc_init(){
   rpc_server.setMessageBufferFactory(&dynamic_mbf);
 
   // Add the led service to the server
-  printf("Adding LED server.\n");
-  rpc_server.addService(&led_service);
+  printf("Adding BBCar server.\n");
+  rpc_server.addService(&car_control_service);
+
   // Run the server. This should never exit
   printf("Running server.\n");
-  //rpc_server.run();
-}
-
-
-int main(void) {
- /* double pwm_table0[] = {150, 120, 90, 60, 30, 0, -30, -60, -90, -120, -150};
-   double speed_table0[] = {42.252,41.136,37.947,28.620,13.393,0.000,16.024,30.214,38.346,41.694,42.970};*/
-   double pwm_table0[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
-   double speed_table0[] = {41.376,40.020,37.150,28.381,12.755,0.000,16.741,30.693,40.180,41.056};
-   double pwm_table1[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
-   double speed_table1[] = {41.376,40.020,37.150,28.381,12.755,0.000,16.741,30.693,40.180,41.056};
-
-  // first and fourth argument : length of table
-  car.setCalibTable(11, pwm_table0, speed_table0, 11, pwm_table1, speed_table1);
-  //pin5.period_ms(20);
-  //pin6.period_ms(20);
-  t.start(callback(&queue, &EventQueue::dispatch_forever));
-  queue.call_every(1ms, Qtirecord);
-  t3.start(callback(&queue3, &EventQueue::dispatch_forever));
-  queue3.call_every(5ms, Qtijudge);
-  t2.start(callback(&queue2, &EventQueue::dispatch_forever));
-  queue2.call_every(5ms, statusjudge);
-  //t_2.start(erpc_init);
-  /*t_1.start(callback(&queue_1, &EventQueue::dispatch_forever));
-  queue_1.call_every(5ms,erpc_call);*/
-
-
-
-
-
-
-//*****erpc**********
-
-
-
-
-  /*queue_1.call(erpc_call);
-  t_1.start(callback(&queue_1, &EventQueue::dispatch_once));
-  queue_1.call(erpc_call);*/
-   /*double pwm_table0[] = {150, 120, 90, 60, 30, 0, -30, -60, -90, -120, -150};
-   double speed_table0[] = {42.252,41.136,37.947,28.620,13.393,0.000,16.024,30.214,38.346,41.694,42.970};
-   double pwm_table1[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
-   double speed_table1[] = {41.376,40.020,37.150,28.381,12.755,0.000,16.741,30.693,40.180,41.056};
-   // first and fourth argument : length of table
-   car.setCalibTable(11, pwm_table0, speed_table0, 11, pwm_table1, speed_table1);*/
-  //encoder_ticker.attach(&encoder_control, 1ms);
-
-
-  /*pin5.period_ms(20);
-  pin6.period_ms(20);
-  t.start(callback(&queue, &EventQueue::dispatch_forever));
-  queue.call_every(1ms, Qtirecord);
-  t3.start(callback(&queue3, &EventQueue::dispatch_forever));
-  queue3.call_every(10ms, Qtijudge);
-  t2.start(callback(&queue2, &EventQueue::dispatch_forever));
-  queue2.call_every(1ms, go_1status);*/
-
-
-  //printf("distance=%f\n",steps*6.5*3.14/32);
-  //rpc_server.run();
+  rpc_server.run();
 
 }
