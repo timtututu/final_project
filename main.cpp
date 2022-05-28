@@ -81,6 +81,8 @@ void statusjudge(){
         if(qtirec==0b1111&&timess==0&&obstacle==0){
             state++;
             timess=1;
+            printf("stst++");
+            ThisThread::sleep_for(1s);
         }
         if(pdistant>5){
             pingbeg=1;
@@ -106,7 +108,7 @@ void Qtirecord(){
     qti.input();
     wait_us(250);
     qtirec=qti;
-   printf("%d ,%d,t=%d,%f\n",qtirec,state,timess,pdistant);
+   printf("%d ,%d,t=%d,%f,obs=%d\n",qtirec,state,timess,pdistant,obstacle);
 }
 void suddenstop(){
         speed=0;
@@ -118,58 +120,114 @@ void suddenstop(){
 
 
 double facter=0.3;
-double speedt=40,speedt2=50,speedt3=60;
+double speedt=30,speedt2=40,speedt3=50;
+double straight=18.5;
 void Qtijudge(){
     car.stop();
     if(qtirec==0b1000&&state!=-1){
-        car.turn(speedt3,facter); //left
-        timess=0;
+        if(state!=-1){
+            car.turn(speedt3,facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt3,facter);
+            timess=0;
+        }
     } 
-    else if(qtirec==0b1100&&state!=-1){
-        car.turn(speedt2,facter);
-        timess=0;
+    else if(qtirec==0b1100){
+        if(state!=-1){
+            car.turn(speedt2,facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt2,facter);
+            timess=0;
+        }
     }
-    else if(qtirec==0b0100&&state!=-1){
-        car.turn(speedt,facter);
-        timess=0;
+    else if(qtirec==0b0100){
+        if(state!=-1){
+            car.turn(speedt,facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt,facter);
+            timess=0;
+        }
     } 
-    else if(qtirec==0b0110&&state!=-1){
-        car.goStraight(18.5);
-        timess=0;
+    else if(qtirec==0b0110){
+        if(state!=-1){
+            car.goStraight(straight); //left
+            timess=0;
+        }
+        else{
+            car.goStraight(-straight);
+            timess=0;
+        }
     } 
-    else if(qtirec==0b0010&&state!=-1){
-        car.turn(speedt,-facter);//right
-        timess=0;
+    else if(qtirec==0b0010){
+        if(state!=-1){
+            car.turn(speedt,-facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt,-facter);
+            timess=0;
+        }
     } 
-    else if(qtirec==0b0011&&state!=-1){
-        car.turn(speedt2,-facter);
-        timess=0;
+    else if(qtirec==0b0011){
+        if(state!=-1){
+            car.turn(speedt2,-facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt2,-facter);
+            timess=0;
+        }
     } 
-    else if(qtirec==0b0001&&state!=-1){
-        car.turn(speedt3,-facter);
-        timess=0;
-    }
-    else if(qtirec==0b0000&&state!=-1){
+    else if(qtirec==0b0001){
+        if(state!=-1){
+            car.turn(speedt3,-facter); //left
+            timess=0;
+        }
+        else{
+            car.turn(-speedt3,-facter);
+            timess=0;
+        }
+    }///以下未改
+    else if(qtirec==0b0000&&state!=-1&&state!=2){
         car.goStraight(-20);
+        timess=0;
+    }
+    else if(qtirec==0b1111&&state!=-1&&state!=2){
+        car.goStraight(straight);
         timess=0;
     } 
     else if(qtirec==0b1111&&state==2&&obstacle==0){
         car.turn(speedt3,facter);
-        ThisThread::sleep_for(10ms);
+        ThisThread::sleep_for(1s);
+        state++;
     } //1111其一狀況第一叉點
 
     else if(qtirec==0b1111&&state==2&&obstacle==1){
         car.turn(speedt3,-facter);
         ThisThread::sleep_for(10ms);
-    } //1111其一狀況 回頭 
-    else if((qtirec==0b1001||qtirec==0b1101||qtirec==0b1011)&&state!=0){
-        car.goStraight(10);
-        timess=0;
+    } //1111其一狀況 回頭  //以上未改
+    else if((qtirec==0b1001||qtirec==0b1101||qtirec==0b1011||qtirec==0b0101||qtirec==0b1010||qtirec==0b0111||qtirec==0b1110)){
+        if(state!=-1){
+            car.goStraight(straight);//left
+            printf("bug");
+            timess=0;
+        }
+        else{
+            car.goStraight(-straight);//left
+            printf("bug");
+            timess=0;
+        }
     } //排除特例
-    else if(state==-1){
+    /*else if(state==-1){
         car.goStraight(-20);
         obstacle=1;
-    }
+    }*/
 }
 
 /** erpc infrastructure */
