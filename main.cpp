@@ -203,7 +203,7 @@ void Qtijudge(){
         //printf("in\n");
         ThisThread::sleep_for(1s);//要得
         obstacle=2;
-        //timess=1;//未測試
+        timess=1;//未測試
         car.goStraight(straight);
         ThisThread::sleep_for(500ms);
     } //1111其一狀況 回頭  //以上未改
@@ -212,12 +212,12 @@ void Qtijudge(){
         ThisThread::sleep_for(880ms);
         car.goStraight(straight);
         ThisThread::sleep_for(300ms);
-        //timess=1;//未測試
+        timess=1;//未測試
         final++;
-        /*if(final>3){
+        if(final>3){
             car.turn(50,1);
             ThisThread::sleep_for(1000ms);
-        }*/
+        }
     }
     else if((qtirec==0b1001||qtirec==0b1101||qtirec==0b1011||qtirec==0b0101||qtirec==0b1010)&&state!=-1){
             car.goStraight(straight);//left
